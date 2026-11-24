@@ -73,11 +73,21 @@ def main(argv=None):
         from reweightmeld.windows import alpha_change_stages, frozen_window
         run = MeldRun(a.run_dir)
         ch = alpha_change_stages(run)
+        from reweightmeld.ramps import describe
         print(run)
+        ramps = run.time_ramps()
+        if ramps is None:
+            why = getattr(run, "_ramps_error", "no Data/system.dat")
+            print(f"restraint time ramps: unknown ({why}); check the setup script")
+        else:
+            print("\n".join(describe(ramps)))
         print(f"ladder changed at {len(ch)} stages: {ch.tolist()}")
         w = frozen_window(run, a.start_stage)
         print(f"window used by `run` (start_stage {a.start_stage}): stages {w[0]}..{w[-1]} ({len(w)} stages, "
               f"{len(w) * run.n_replicas} frames)")
+        if ramps is not None and ramps["full_stage"] >= a.start_stage:
+            print(f"WARNING: start_stage {a.start_stage} is inside the restraint ramp; with --segments the first "
+                  f"segment would mix Hamiltonians. Use --start-stage {ramps['full_stage'] + 1}.")
         return
 
     if a.cmd == "run":

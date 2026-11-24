@@ -7,6 +7,7 @@
     ens, idx = rw.resample(run, 1000, seed=0)   # mdtraj trajectory drawn by weight
 """
 import json
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -149,6 +150,14 @@ def reweight(run, target=0, start_stage=201, segments=False, min_segment_len=50,
             else [frozen_window(run, start_stage)])
     if not wins:
         raise ValueError("no usable stages: check start_stage / min_segment_len")
+    ramps = run.time_ramps() if hasattr(run, "time_ramps") else None
+    ramp_end = ramps["full_stage"] if ramps is not None else None
+    if ramp_end is not None and wins[0][0] <= ramp_end:
+        msg = (f"the window starts at stage {wins[0][0]}, but restraint time ramps run until stage {ramp_end}: "
+               f"the Hamiltonians change inside the window. Use start_stage >= {ramp_end + 1}.")
+        warnings.warn(msg)
+        if log:
+            log("WARNING: " + msg)
     res = []
     for i, w in enumerate(wins):
         if log:
@@ -171,4 +180,5 @@ def reweight(run, target=0, start_stage=201, segments=False, min_segment_len=50,
         weight_bayes=np.concatenate([r["weight_bayes"] * c for r, c in zip(res, mix)]) if has_b else None,
         weight_bayes_std=np.concatenate([r["weight_bayes_std"] * c for r, c in zip(res, mix)]) if has_b else None,
         settings={"start_stage": int(start_stage), "segments": bool(segments), "min_segment_len": int(min_segment_len),
-                  "bayes": bool(bayes), "alpha_change_stages": alpha_change_stages(run).tolist()})
+                  "bayes": bool(bayes), "alpha_change_stages": alpha_change_stages(run).tolist(),
+                  "ramp_end_stage": ramp_end})
