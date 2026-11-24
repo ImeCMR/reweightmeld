@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reweightmeld"
+version = "0.1.0"
+description = "MBAR / BayesMBAR reweighting of MELD H,T-REMD runs to their target state, with diagnostics and ensemble analysis"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+dependencies = ["numpy", "netCDF4", "mdtraj>=1.10", "pymbar>=4", "matplotlib", "pyyaml"]
+
+[project.optional-dependencies]
+# BayesMBAR posterior weights (JAX, CPU is enough)
+bayes = ["jax", "jaxlib", "bayesmbar @ git+https://github.com/DingGroup/BayesMBAR"]
+test = ["pytest"]
+
+[project.scripts]
+reweightmeld = "reweightmeld.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

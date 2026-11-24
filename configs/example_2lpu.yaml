@@ -1,0 +1,14 @@
+# reweightmeld run -c configs/example_2lpu.yaml
+run_dir: /orange/alberto.perezant/imesh.ranaweera/projects/4_NOESY_ensemble_generation/data/train/2lpu
+out_prefix: out/2lpu/2lpu
+target: 0
+start_stage: 201
+segments: false
+bayes: true
+n_posterior: 200
+seed: 0
+resample: 1000
+report: true
+n_analysis: 2000
+n_states: 5
+restraints: ["NOE.dat:noe", "local_NOE.dat:noe"]
