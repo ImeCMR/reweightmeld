@@ -22,7 +22,7 @@ If packages in `~/.local` (pip `--user` installs) shadow the environment's own, 
 ## Command line
 
 ```bash
-reweightmeld info /path/to/meld_run                     # replicas, stages, ladder adaptations, window used
+reweightmeld info /path/to/meld_run                     # replicas, stages, restraint-ramp end, ladder adaptations, window used
 reweightmeld run /path/to/meld_run -o out/sys --bayes --resample 1000 --report \
     --restraint NOE.dat:noe --restraint local_NOE.dat:noe
 reweightmeld run -c configs/example_2lpu.yaml           # the same from a YAML file (flags override it)
@@ -33,7 +33,7 @@ reweightmeld report out/sys --n-states 4                # plots again from saved
 | Option | Meaning (default) |
 |---|---|
 | `--target` | ladder slot to reweight to (0 = lowest temperature, full restraints) |
-| `--start-stage` | earliest stage used (201: skips the restraint ramp of the usual setup scripts; use 1 if the run has none) |
+| `--start-stage` | earliest stage used (201: skips the restraint ramp of the usual setup scripts; use 1 if the run has none). `info` prints where the run's ramps end, and `run` warns if the window starts inside them |
 | `--segments` | reweight every constant-alpha segment, each to its own target slot, then pool them by ESS (default: only the stages after the last ladder adaptation) |
 | `--min-segment-len` | segments shorter than this are skipped (50) |
 | `--bayes` | BayesMBAR posterior mean and std of every weight |
@@ -62,10 +62,10 @@ report.structure(run, rw, "out/sys_plots", prefix="out/sys", restraints=["NOE.da
 
 **States and samples.** Every ladder slot k is one thermodynamic state, which requires the ladder (the alphas)
 to be constant over the window used. A sample is a frame n = (stage s, slot j). Its reduced energy in state k is
-MELD's own energy-matrix entry, in kT:
+MELD's own energy-matrix entry `energy_matrix[k, j, s]`, written E below, in kT:
 
 $$
-u_k(n) \;=\; \texttt{energy\_matrix}[k, j, s] \;=\; \frac{U\big(x_{s,j};\ \alpha_k,\ y_{s,j}\big)}{R\,T(\alpha_k)} \;-\; \log p_{\alpha_k}\big(y_{s,j}\big)
+u_k(n) \;=\; E[k, j, s] \;=\; \frac{U\big(x_{s,j};\ \alpha_k,\ y_{s,j}\big)}{R\,T(\alpha_k)} \;-\; \log p_{\alpha_k}\big(y_{s,j}\big)
 $$
 
 - U is the full potential: force field, implicit solvent and the restraints scaled for α_k.
@@ -137,6 +137,7 @@ src/reweightmeld/
   mbar.py        u_kn construction, MBAR, BayesMBAR, ESS, reweight_window()
   ensemble.py    reweight() pipeline, Reweighting (save / load / resample)
   restraints.py  MELD distance-restraint files and group satisfaction
+  ramps.py       restraint time ramps (end stage) read from Data/system.dat without MELD
   analysis.py    Cα-distance PCA, k-means states, RMSF, Rg, contact maps
   plots.py       figure functions
   report.py      diagnostics() and structure(): all figures for a run

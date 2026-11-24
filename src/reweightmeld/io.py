@@ -103,6 +103,19 @@ class MeldRun:
             out[idx] = chunk[slots[idx], :, :, stages[idx] - lo]
         return out
 
+    def time_ramps(self):
+        """Restraint time ramps from Data/system.dat (see reweightmeld.ramps.time_ramps); None if the file is
+        missing or cannot be read. The Hamiltonians are fixed from stage result["full_stage"] on."""
+        if not hasattr(self, "_ramps"):
+            from reweightmeld.ramps import time_ramps
+            path = self.run_dir / "Data" / "system.dat"
+            try:
+                self._ramps = time_ramps(path) if path.exists() else None
+            except Exception as err:                        # unexpected pickle content: report, do not fail
+                self._ramps = None
+                self._ramps_error = f"{type(err).__name__}: {err}"
+        return self._ramps
+
     def topology(self, standard_names=False) -> mdtraj.Topology:
         """All-atom topology of the run (frame 1 of Data/trajectory.pdb). standard_names=True maps
         MELD / Amber residue names (HIE, CYX, ...) to standard ones; atom names are kept as written."""
